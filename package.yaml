@@ -1,5 +1,5 @@
 name:                d24
-version:             0.0.0.0
+version:             0.1.0.0
 github:              "githubuser/d24"
 license:             BSD3
 author:              "Konstantin Kazartsev"
@@ -21,6 +21,11 @@ description:         Please see the README on GitHub at <https://github.com/gith
 
 dependencies:
 - base >= 4.7 && < 5
+- containers
+- mtl
+- parsec
+- lens
+- extra
 
 library:
   source-dirs: src

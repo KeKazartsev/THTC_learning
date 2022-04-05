@@ -1,6 +1,6 @@
-module Lib
-    ( someFunc
-    ) where
+module Lib (
+  cutQuotes,
+) where
 
-someFunc :: IO ()
-someFunc = putStrLn "someFunc"
+cutQuotes x = reverse $ tail $ reverse $ tail x
+
