@@ -4,6 +4,7 @@ module Reg (
     isValReg, isValRegGlobal, isValRegVirt, isValRegStack,
     getValRegStrict,
     getReg, getRegStrict, setReg,
+    getRegIndexStrict, getValRegIndexStrict,
     getVal,
     stackReg, virtReg,
     regToVal,
@@ -54,6 +55,14 @@ isValRegStack val = case val of
 getValRegStrict val = case val of
     RVar v -> v
     otherwise -> error $ show val ++ " is not a reg"
+
+getRegIndexStrict :: Var -> Int
+getRegIndexStrict (Var s) = read $ tail s
+
+getValRegIndexStrict :: Val -> Int
+getValRegIndexStrict val = case val of
+    RVar var -> getRegIndexStrict var
+    ohterwise -> error "trying get register index from non-right variable"
 
 -- GET && SET
 

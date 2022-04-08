@@ -1,2 +1,5 @@
 .stack-work/
+example_1/out*
+d24.cabal
+stack.yaml.lock
 *~

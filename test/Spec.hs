@@ -1,5 +1,7 @@
 import Data.List.Extra
 import Compile
+import IRPhase2VirtRegs
+import IRPhaseDCE
 
 {-
  - Checking IR compiler optimization correctness.
@@ -16,7 +18,7 @@ input_vect = [1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5]
 
 main :: IO ()
 main = do
-    let irs = compilerCompile [] ["globaluse z"] program_text
+    let irs = compilerCompile [iRPhase2VirtRegs, iRPhaseDCE] ["globaluse z"] program_text
     let ress = compilerExecPhases irs input_vect
     putStrLn $ if allSame ress then "[OK]" else "[FAIL!]"
     return ()

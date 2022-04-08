@@ -88,11 +88,11 @@ doParseIR guses str = do
     return ir2
 
 parseToIR :: IRInit -> IR
-parseToIR (o_gv, srn) = IR PhCreate 0 io gd vr es ir_cnts ir_stats
+parseToIR (o_gv, srn) = IR IRPhCreate 0 io gd vr es ir_cnts ir_stats
     where
     io = zip [0..] o_gv
     gd = M.empty
     vr = M.empty
     es = M.empty
-    ir_cnts = IRCnt (length io) 0 srn
-    ir_stats = IRCnt (length io) 0 srn
+    ir_cnts = IRCnt (length io) 0 srn [0..pred srn]
+    ir_stats = IRCnt (length io) 0 srn [0..pred srn]
