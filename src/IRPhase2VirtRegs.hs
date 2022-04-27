@@ -9,9 +9,9 @@ import Control.Monad.State
 import qualified Data.Map.Strict as M
 import Control.Lens
 
-iRPhase2VirtRegs :: IR -> IR 
+iRPhase2VirtRegs :: IR -> IR
 iRPhase2VirtRegs ir = if _nPhase ir == IRPhCreate
-    then (nPhase .~ IRPh2VirtRegs) . (nPhaseNum +~ 1) $ iRPhase2VirtRegs' ir
+    then iRNormalizePhase $ (nPhase .~ IRPh2VirtRegs) . (nPhaseNum +~ 1) $ iRPhase2VirtRegs' ir
     else error $ "IRphase2VirtRegs function must be calld directly after IRPhCreate; But curent Phase == " ++ show (_nPhase ir)
 
 iRPhase2VirtRegs' :: IR -> IR

@@ -1,6 +1,6 @@
 module Oper (
     OpName(..), Oper(..),
-    IOper, showIOper, showIOperR,
+    IOper, showIOper,
     operDef, operArg1, operArg2,
 ) where
 
@@ -10,12 +10,7 @@ import Text.Printf
 
 type IOper = (Int, Oper)
 showIOper :: IOper -> String
-showIOper (i, o) = printf "%5d: %s" i (show o)
-
-showIOperR :: Show a => M.Map Var a -> IOper -> String
-showIOperR gdefs (i, o@(Oper _ d _ _)) = case M.lookup d gdefs of
-    Nothing -> showIOper (i, o)
-    Just g -> printf "%s(== %s)" (showIOper (i, o)) (show g)
+showIOper (i, o) = printf "%-4d: %-22s" i (show o)
 
 data OpName = GlobalUse | Inp | Set | Add | Sub | Mul | Div | Mod | Eql deriving (Eq, Ord, Show)
 

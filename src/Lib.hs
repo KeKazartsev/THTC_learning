@@ -1,6 +1,5 @@
 module Lib (
-  cutQuotes,
+    cutQuotes,
 ) where
 
 cutQuotes x = reverse $ tail $ reverse $ tail x
-

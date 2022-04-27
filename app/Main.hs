@@ -4,10 +4,12 @@ import Compile
 import Text.Printf
 import IRPhase2VirtRegs
 import IRPhaseDCE
+import IR
+import Estimate
 
 name = "AdventOfCode : 2021 : 24 - simpliest IR compiler"
 major_version = 0 :: Int
-minor_version = 2 :: Int
+minor_version = 3 :: Int
 
 input_file = "example_1/input.txt"
 output_prefix = "example_1/out"
