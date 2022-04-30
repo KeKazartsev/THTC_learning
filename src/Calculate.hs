@@ -17,22 +17,22 @@ calcOper op n1 n2
     | op == Eql = if n1 == n2 then 1 else 0
     | op == Set || op == GlobalUse = n1
 
-execOper regs o@(Oper op d u1 u2) = regs'
+execOper o@(Oper op d u1 u2) calcR = def
     where
-    v1 = getVal regs u1
-    v2 = getVal regs u2
+    v1 = getVal calcR u1
+    v2 = getVal calcR u2
     def = calcOper op (fromJust v1) (fromJust v2)
-    regs' = setReg regs d def
 
-execOpers stack os = go regs os []
+execIOpers stack os = go os calcR calcI
     where
-    regs = M.fromList $ zip (map stackReg [0..]) stack
-    go regs [] res = res
-    go regs ((i, o@(Oper op d u1 u2)):os) res = go regs' os res'
+    calcR = M.fromList $ zip (map stackReg [0..]) stack
+    calcI = M.empty
+    go [] calcR calcI= (calcR, calcI)
+    go ((i, o@(Oper op d u1 u2)):os) calcR calcI = go os calcR' calcI'
         where
-        regs' = execOper regs o
-        res' = if op == GlobalUse
-            then res ++ [(d, getRegStrict regs' d)] else res
+        rs = execOper o calcR
+        calcR' = setReg calcR d rs
+        calcI' = M.insert i rs calcI
 
-execIR :: [Int] -> IR -> [(Var, Int)]
-execIR stack ir = execOpers stack (_iOpers ir)
+execIR :: [Int] -> IR -> M.Map Int Int
+execIR stack ir = snd $ execIOpers stack (_iOpers ir)

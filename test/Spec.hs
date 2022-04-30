@@ -3,6 +3,8 @@ import Compile
 import IRPhase2VirtRegs
 import IRPhaseDCE
 
+import Test.QuickCheck
+
 {-
  - Checking IR compiler optimization correctness.
  - IR compiler optimize program step-by-step, changin it's operations,
@@ -16,14 +18,24 @@ import IRPhaseDCE
 
 input_vect = [1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5]
 
+g_uses = ["globaluse z"]
+phases = [iRPhase2VirtRegs, iRPhaseDCE]
+irs = compilerCompile phases g_uses program_text 
+doExec = compilerExecPhases irs
+
+isOK :: Int -> Int -> Int -> Int -> Property
+isOK a b c d = (collect $ abs(var) > 200) $ allSame (doExec aa)
+    where
+    var = abs $ a*b*c*d
+    divs = [11,13,17,19,23,29,31,37,41,43,47,53,59,61]
+    aa = map (\x -> 1 + ((var `mod` x) `mod` 9)) divs
+
+
 main :: IO ()
 main = do
-    let irs = compilerCompile [iRPhase2VirtRegs, iRPhaseDCE] ["globaluse z"] program_text
-    let ress = compilerExecPhases irs input_vect
-    putStrLn $ if allSame ress then "[OK]" else "[FAIL!]"
+    --putStrLn $ if isOK input_vect then "[OK]" else "[FAIL!]"
+    quickCheckWith stdArgs { maxSuccess = 1000 } isOK
     return ()
-
-
 
 program_text = "inp w\n\
 \mul x 0\n\

@@ -15,6 +15,7 @@ import Data.Either (isRight, fromRight)
 import qualified Data.Map.Strict as M
 import Data.List (nub, maximumBy)
 import Data.Maybe (catMaybes)
+import Control.Lens
 
 type StateParse i o = ParsecT i () (State (Int)) o
 
@@ -87,12 +88,17 @@ doParseIR guses str = do
     let ir2 = parseToIR ir1
     return ir2
 
+collectGUses :: [IOper] -> M.Map Int Var
+collectGUses ios = go ios M.empty
+    where
+    go [] gu = gu
+    go ((i, o@(Oper op d a1 a2)):os) gu = go os gu'
+        where gu' = if op == GlobalUse then M.insert i d gu else gu
+
 parseToIR :: IRInit -> IR
-parseToIR (o_gv, srn) = IR IRPhCreate 0 io gd vr es ir_cnts ir_stats
+parseToIR (o_gv, srn) = (iOpers .~ io) . (gUses .~ gu) . (iRcnt .~ ir_cnts) . (iRstat .~ ir_stats) $ emptyIR
     where
     io = zip [0..] o_gv
-    gd = M.empty
-    vr = M.empty
-    es = M.empty
+    gu = collectGUses io
     ir_cnts = IRCnt (length io) 0 srn [0..pred srn]
     ir_stats = IRCnt (length io) 0 srn [0..pred srn]

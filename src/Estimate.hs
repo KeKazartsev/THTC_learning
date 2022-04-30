@@ -1,6 +1,6 @@
 module Estimate (
     EstimateRes,
-    estimateOpers,
+    estimateIOpers,
 ) where
 
 import Reg
@@ -19,12 +19,21 @@ import Text.Printf
  -}
 type EstimateRes = Maybe (Int, Int)
 
-estimateOpers :: [IOper] -> M.Map Var EstimateRes
-estimateOpers ops = go ops M.empty
+{- Note: In due to support PhysicalResg we make too complex code
+ - z <- Set 0   // Map (z, 0)
+ - z <- Set 1   // Map (z, 1)
+ - y <- z Eql 1 // Map (z, 1) (y, 1)
+ --}
+estimateIOpers :: [IOper] -> M.Map Int EstimateRes
+estimateIOpers ops = snd $ go ops M.empty M.empty
     where
-    go [] est = est
-    go ((_, o@(Oper op d u1 u2)):os) est = go os est'
-        where est' = setReg est d $ estimateOper o est
+    go :: [IOper] -> M.Map Var EstimateRes -> M.Map Int EstimateRes -> (M.Map Var EstimateRes, M.Map Int EstimateRes)
+    go [] estR estI = (estR, estI)
+    go ((i, o@(Oper op d u1 u2)):os) estR estI = go os estR' estI'
+        where
+        rs = estimateOper o estR
+        estR' = setReg estR d rs
+        estI' = M.insert i rs estI
 
 estimateOper :: Oper -> M.Map Var EstimateRes -> EstimateRes
 estimateOper o@(Oper op d u1 u2) est = res

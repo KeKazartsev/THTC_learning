@@ -1,3 +1,10 @@
+Version 0.4:
+Add more proper testing:
+    Test through quickTest - Haskell testing framework
+    some corresponding auxiliary changes:
+        - Make "calculation" (in sense of result of every operation) part of IR, and dump result of culculation in every phase
+
+
 Version 0.3:
 Add estimate technique:
     estimate result of every oper as (including) range: [Min_Value..Max_Value], accordingly to previously estimated arguments

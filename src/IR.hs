@@ -1,7 +1,8 @@
 {-# LANGUAGE TemplateHaskell #-}
 module IR (
     IRCnt(..), opN, vrN, srN,
-    IR(..), iOpers, iRcnt, iRstat, gDefs, ests, nPhase, nPhaseNum,
+    IR(..), iOpers, iRcnt, iRstat, gDefs, gUses, calcs, ests, nPhase, nPhaseNum,
+    emptyIR,
     saveIR,
     collectIRStats,
     IRInit(..),
@@ -40,6 +41,7 @@ data IRCnt = IRCnt {
     _srs :: [Int]
 }
 makeLenses ''IRCnt
+emptyIRCnt = IRCnt 0 0 0 []
 showIRCnts :: IRCnt -> String
 showIRCnts cnts = printf "Statistic :\n\tOpers Used = %s\n\tVirtual Regs Used = %s\n\tStack Regs Used = %s\n\tStack Regs = %s" (show $ _opN cnts) (show $ _vrN cnts) (show $ _srN cnts) (show $ _srs cnts)
 
@@ -48,12 +50,15 @@ data IR = IR {
     _nPhaseNum :: Int,
     _iOpers :: [IOper],
     _gDefs :: M.Map Var Var,
+    _gUses :: M.Map Int Var,
     _vars :: M.Map Var Int,
-    _ests :: M.Map Var EstimateRes,
+    _ests :: M.Map Int EstimateRes,
+    _calcs :: M.Map Int Int,
     _iRcnt :: IRCnt,
     _iRstat :: IRCnt
 }
 makeLenses ''IR
+emptyIR = IR IRPhCreate 0 [] M.empty M.empty M.empty M.empty M.empty emptyIRCnt emptyIRCnt
 
 showIR :: IR -> String
 showIR ir = printf "%s\n%s\n%s\n%s\n\n\n%s\n%s\n\n%s" sNPhase sPhase sIOCount sStat sIOpers'GD sGDefs sEsts
@@ -66,14 +71,11 @@ showIR ir = printf "%s\n%s\n%s\n%s\n\n\n%s\n%s\n\n%s" sNPhase sPhase sIOCount sS
     sEsts = show $ _ests ir
     sStat = showIRCnts (_iRstat ir) :: String
 
-    sIOpers'GD = unlines $ if _nPhase ir == IRPhCreate
-        then showIROpers1 ir else showIROpers2 ir
+    sIOpers'GD = unlines $ showIROpers1 ir
     sIOpersGD = printf "\n\nOpers(Global Defs):\n%s\n\n" sIOpers'GD :: String
 
 showIROpers1 ir = map (cutQuotes . show . f) (_iOpers ir)
-    where f iop = showIOperAdvanced [showIOperGDef] "|" iop ir
-showIROpers2 ir = map (cutQuotes . show . f) (_iOpers ir)
-    where f iop = showIOperAdvanced [showIOperGDef, showIOperEst] "|" iop ir
+    where f iop = showIOperAdvanced [showIOperGDef, showIOperCalc, showIOperEst] "|" iop ir
 
 type FShowIOperAttribute = String -> IOper -> IR -> String -> String
 
@@ -84,19 +86,27 @@ showIOperAttributes (f:fs) dlm iop ir str = showIOperAttributes fs dlm iop ir (f
 showIOperAdvanced :: [FShowIOperAttribute] -> String -> IOper -> IR -> String
 showIOperAdvanced fs dlm iop ir = showIOperAttributes fs dlm iop ir (showIOper iop)
 
-showIOperGDef dlm (_, Oper op d u1 u2) ir str = printf "%s %s %1s" str dlm attr
+showIOperGDef dlm (_, Oper op d u1 u2) ir str = if (_gDefs ir /= M.empty)
+    then printf "%s %s %1s" str dlm attr
+    else printf "%s" str
     where attr = case M.lookup d (_gDefs ir) of
             Nothing -> ""
             Just g -> show g
 
-showIOperEst dlm (_, Oper op d u1 u2) ir str = printf "%s %s %s" str dlm attr
-    where attr = case M.lookup d (_ests ir) of
+showIOperEst dlm (i, Oper op d u1 u2) ir str = if (_ests ir /= M.empty)
+    then printf "%s %s %s" str dlm attr
+    else printf "%s" str
+    where attr = case M.lookup i (_ests ir) of
             Nothing -> " - "
             Just Nothing -> " NAN "
             Just (Just val) -> show val
 
-
-
+showIOperCalc dlm (i, Oper op d u1 u2) ir str = if (_calcs ir /= M.empty)
+    then printf "%s %s %10s" str dlm attr
+    else printf "%s" str
+    where attr = case M.lookup i (_calcs ir) of
+            Nothing -> " - "
+            Just val -> show val
 
 saveIR file_prefix ir = do
     let fileName = printf "%s_ir_%03d_%s.txt" file_prefix (_nPhaseNum ir) (show $ _nPhase ir)
@@ -138,4 +148,4 @@ iRNormalizePhase ir = (iRstat .~ stats') $ ir1
 
 estimateIR :: IR -> IR
 estimateIR ir = (ests .~ est') ir
-    where est' = estimateOpers $ _iOpers ir
+    where est' = estimateIOpers $ _iOpers ir
