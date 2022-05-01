@@ -92,7 +92,7 @@ collectGUses :: [IOper] -> M.Map Int Var
 collectGUses ios = go ios M.empty
     where
     go [] gu = gu
-    go ((i, o@(Oper op d a1 a2)):os) gu = go os gu'
+    go ((i, o@(Oper op d _ _)):os) gu = go os gu'
         where gu' = if op == GlobalUse then M.insert i d gu else gu
 
 parseToIR :: IRInit -> IR

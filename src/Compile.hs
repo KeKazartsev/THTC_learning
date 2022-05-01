@@ -1,7 +1,7 @@
 module Compile (
     compilerCompile,
     compilerSavePhases, compilerExecPhases,
-    compilerLastPhase,
+    --compilerLastPhase,
     compilerApplyExec,
 ) where
 
@@ -12,6 +12,7 @@ import Calculate
 import Lib
 import qualified Data.Map.Strict as M
 import Control.Lens
+import IRUPhaseDCE
 
 compilerMakeIR :: [String] -> String -> IR
 compilerMakeIR uses text = case (doParseIR uses text) of
@@ -19,12 +20,31 @@ compilerMakeIR uses text = case (doParseIR uses text) of
     Right ir -> ir
 
 compilerApplyPhases :: [IR -> IR] -> IR -> [IR]
-compilerApplyPhases [] ir = [ir]
-compilerApplyPhases (f:fs) ir = ir : compilerApplyPhases fs (f ir)
+compilerApplyPhases [] ir = []
+compilerApplyPhases (f:fs) ir = comp ++ compilerApplyPhases fs (last comp)
+    where comp = compilerApplyComplex f ir
+
+compilerApplyComplex :: (IR -> IR) -> IR -> [IR]
+compilerApplyComplex f ir = [ir1, ir2]
+    where
+    ir1 = compilerApplyMain f ir
+    ir2 = compilerApplyUtility iRUPhaseDCE ir1
+
+compilerApplyMain f ir = ir2
+    where
+    ir1 = f ir
+    ir2 = iRCalcUtilStat $ (nPhaseNum +~ 1) . (nSubPhase .~ IRSubPhPhase) . (nSubPhaseNum .~ 0) $ ir1
+
+compilerApplyUtility fu ir = ir2
+    where
+    ir1 = fu ir
+    ir2 = iRCalcUtilStat $ (nSubPhaseNum +~ 1) $ ir1
 
 compilerCompile :: [IR -> IR] -> [String] -> String -> [IR]
-compilerCompile phases uses text =
-    compilerApplyPhases phases $ compilerMakeIR uses text
+compilerCompile phases uses text = ir : compilerApplyPhases phases ir
+    where ir = compilerMakeIR uses text
+
+-- ============== EXEC
 
 compilerExecPhases :: [IR] -> [Int] -> [[(Var, Int)]]
 compilerExecPhases irs input = map (compilerExecPhase input) irs
@@ -42,5 +62,5 @@ compilerApplyExec input irs = map (applyExec input) irs
 compilerSavePhases :: String -> [IR] -> IO()
 compilerSavePhases file_prefix irs = mapM_ (saveIR file_prefix) irs
 
-compilerLastPhase :: [IR] -> IR
-compilerLastPhase = last
+--compilerLastPhase :: [IR] -> IR
+--compilerLastPhase = last

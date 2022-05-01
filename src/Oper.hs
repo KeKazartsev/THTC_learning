@@ -2,6 +2,7 @@ module Oper (
     OpName(..), Oper(..),
     IOper, showIOper,
     operDef, operArg1, operArg2,
+    collectV2IOpers,
 ) where
 
 import Reg
@@ -23,3 +24,12 @@ instance Show Oper where
 operDef (Oper _ d _ _) = d
 operArg1 (Oper _ _ u1 _) = u1
 operArg2 (Oper _ _ _ u2) = u2
+
+collectV2IOpers :: [IOper] -> M.Map Var Int
+collectV2IOpers ios = go ios M.empty
+    where
+    go [] viopers = viopers
+    go ((i, o@(Oper _ d _ _)):os) viopers = go os viopers'
+        where
+        viopers' = if isRegVirt d
+        then M.insert d i viopers else viopers

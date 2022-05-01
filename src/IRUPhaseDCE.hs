@@ -1,5 +1,5 @@
-module IRPhaseDCE (
-  iRPhaseDCE,
+module IRUPhaseDCE (
+  iRUPhaseDCE,
 ) where
 
 import Reg
@@ -8,10 +8,10 @@ import IR
 import qualified Data.Set as S
 import Control.Lens
 
-iRPhaseDCE :: IR -> IR
-iRPhaseDCE ir = if _nPhase ir /= IRPhCreate
-    then iRNormalizePhase $ (nPhase .~ IRPhDCE) . (nPhaseNum +~ 1) . (iOpers .~ iopers') $ ir
-    else error $ "Dead Code Elimination phase (IRPhDCE) can't be run on physical regs. Run IR phase 2VirtRegs before"
+iRUPhaseDCE :: IR -> IR
+iRUPhaseDCE ir = if _nPhase ir /= IRPhCreate
+    then (nSubPhase .~ IRSubPhDCE) . (iOpers .~ iopers') $ ir
+    else error $ "Dead Code Elimination phase (IRUPhDCE) can't be run on physical regs. Run IR phase 2VirtRegs before"
     where
     iopers' = doDCE (_iOpers ir)
 

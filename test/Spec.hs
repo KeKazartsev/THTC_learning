@@ -1,7 +1,9 @@
 import Data.List.Extra
 import Compile
+
 import IRPhase2VirtRegs
-import IRPhaseDCE
+import IRUPhaseDCE
+import IRPhaseSO
 
 import Test.QuickCheck
 
@@ -17,23 +19,23 @@ import Test.QuickCheck
  -}
 
 input_vect = [1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5]
+actualPhases = [iRPhase2VirtRegs, iRUPhaseDCE, iRPhaseSO, iRUPhaseDCE]
 
 g_uses = ["globaluse z"]
-phases = [iRPhase2VirtRegs, iRPhaseDCE]
-irs = compilerCompile phases g_uses program_text 
+phases = [iRPhase2VirtRegs, iRUPhaseDCE, iRPhaseSO, iRUPhaseDCE]
+irs = compilerCompile phases g_uses program_text
 doExec = compilerExecPhases irs
 
-isOK :: Int -> Int -> Int -> Int -> Property
-isOK a b c d = (collect $ abs(var) > 200) $ allSame (doExec aa)
+isOK :: Int -> Int -> Int -> Int -> Int -> Int -> Int -> Int -> Int -> Int -> Int -> Int -> Int -> Int -> Property
+isOK a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 =
+    (collect (bb !! 0)) $ allSame (doExec bb)
     where
-    var = abs $ a*b*c*d
-    divs = [11,13,17,19,23,29,31,37,41,43,47,53,59,61]
-    aa = map (\x -> 1 + ((var `mod` x) `mod` 9)) divs
+    aa = [a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14]
+    bb = map (\x -> 1 + mod (abs x) 9) aa
 
 
 main :: IO ()
 main = do
-    --putStrLn $ if isOK input_vect then "[OK]" else "[FAIL!]"
     quickCheckWith stdArgs { maxSuccess = 1000 } isOK
     return ()
 

@@ -11,15 +11,14 @@ import Control.Lens
 
 iRPhase2VirtRegs :: IR -> IR
 iRPhase2VirtRegs ir = if _nPhase ir == IRPhCreate
-    then iRNormalizePhase $ (nPhase .~ IRPh2VirtRegs) . (nPhaseNum +~ 1) $ iRPhase2VirtRegs' ir
+    then (nPhase .~ IRPh2VirtRegs) $ iRPhase2VirtRegs' ir
     else error $ "IRphase2VirtRegs function must be calld directly after IRPhCreate; But curent Phase == " ++ show (_nPhase ir)
 
 iRPhase2VirtRegs' :: IR -> IR
-iRPhase2VirtRegs' ir = (iOpers .~ iopers') . (gDefs .~ gdefs') . (iRcnt .~ cnts') . (iRstat .~ stats') $ ir
+iRPhase2VirtRegs' ir = (iOpers .~ iopers') . (iRcnt .~ cnts') $ ir
     where
-    (iopers', (vrn', gdefs', regs)) = runState (moveOpersToVirt (_iOpers ir)) (0, _gDefs ir, M.empty)
+    (iopers', (vrn', _, _)) = runState (moveOpersToVirt (_iOpers ir)) (0, M.empty, M.empty)
     cnts' = (vrN .~ vrn') $ (_iRcnt ir) :: IRCnt
-    stats' = collectIRStats (snd $ unzip iopers')
 
 moveOpersToVirt :: [IOper] -> State (Int, M.Map Var Var, M.Map Var Var) [IOper]
 moveOpersToVirt [] = do

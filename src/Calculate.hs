@@ -1,5 +1,6 @@
 module Calculate (
-    execIR
+    execIR,
+    calcOper,
 ) where
 
 import Reg
